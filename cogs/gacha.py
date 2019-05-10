@@ -3,6 +3,8 @@ from discord.ext import commands
 import json
 from urllib.request import urlopen
 import random
+import io
+import aiohttp
 
 class Gacha(commands.Cog):
     def __init__(self, bot):
@@ -44,18 +46,20 @@ class Gacha(commands.Cog):
                 cardstr += '\n**Attribute:** ' + str(rnd_card.get('attribute'))
 
             # Retrieve card image(s) and send with message
-            # url1 = rnd_card.get('card_image')
-            # url2 = rnd_card.get('card_idolized_image')
-            #
-            # img1=urllib.FancyURLopener()
-            # img1.retrieve(url1, str(rnd_card.get('id')) + 'unidolized')
-            #
-            # img2=urllib.FancyURLopener()
-            # img2.retrieve(url2, str(rnd_card.get('id')) + 'idolized')
-            #
-            #
-            # images = Attachment(cardstr, img1, img2)
-            # return cardstr
+            if ((rnd_card.get('card_image') is not None) and \
+                (rnd_card.get('card_idolized_image') is not None)):
+                url1 = 'http:' + rnd_card.get('card_image')
+                url2 = 'http:' + rnd_card.get('card_idolized_image')
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url1) as resp:
+                        if resp.status != 200:
+                            print('Error: Could not download file')
+                            await ctx.send('Oops, something went wrong with ' +\
+                                'downloading the image.')
+                            return
+                        data = io.BytesIO(await resp.read())
+                        await ctx.send(file=discord.File(data, str(rnd_id) + '.png'))
             await ctx.send(cardstr)
 
     @commands.command()
