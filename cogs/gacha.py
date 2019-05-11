@@ -21,6 +21,7 @@ class Gacha(commands.Cog):
         else:
             rnd_num = random.randint(1, 100)
 
+            # Generate random number to simulate card rarity
             if rnd_num <= 80:
                 rarity = 'R'
             elif rnd_num <= 95:
@@ -30,7 +31,9 @@ class Gacha(commands.Cog):
             else:
                 rarity = 'UR'
 
-            id_list = json.load(urlopen('http://schoolido.lu/api/cardids?rarity=' + rarity))
+            # Request list of non-promo card ids with generated rarity
+            id_list = json.load(urlopen('http://schoolido.lu/api/cardids?' +\
+                'is_promo=false&rarity=' + rarity))
 
             rnd_id = id_list[random.randint(0, len(id_list) - 1)]
 
@@ -47,12 +50,12 @@ class Gacha(commands.Cog):
             if rnd_idol.get('attribute') is not None:
                 cardstr += '\n**Attribute:** ' + str(rnd_card.get('attribute'))
 
-            # Retrieve card image(s) and send with message
-            if (rnd_card.get('card_image') is not None)
-                (rnd_card.get('card_idolized_image') is not None)):
-                url1 = 'http:' + rnd_card.get('card_image')
-                url2 = 'http:' + rnd_card.get('card_idolized_image')
+            img1 = None
+            img2 = None
 
+            # Retrieve card image(s) and send with message
+            if (rnd_card.get('card_image') is not None):
+                url1 = 'http:' + rnd_card.get('card_image')
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url1) as resp:
                         if resp.status != 200:
@@ -61,7 +64,8 @@ class Gacha(commands.Cog):
                                 'downloading the image.')
                             return
                         img1 = io.BytesIO(await resp.read())
-                        image1 = Image.open(img1)
+            if (rnd_card.get('card_idolized_image') is not None):
+                url2 = 'http:' + rnd_card.get('card_idolized_image')
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url2) as resp:
                         if resp.status != 200:
@@ -70,14 +74,18 @@ class Gacha(commands.Cog):
                                 'downloading the image.')
                             return
                         img2 = io.BytesIO(await resp.read())
-                        image2 = Image.open(img2)
+            if ((img1 is not None) and (img2 is not None)):
+                # Stitch together unidolized and idolized images
+                image1 = Image.open(img1)
+                image2 = Image.open(img2)
+
                 (width1, height1) = image1.size
                 (width2, height2) = image2.size
 
                 result_width = width1 + width2
                 result_height = max(height1, height2)
 
-                result = Image.new('RGB', (result_width, result_height))
+                result = Image.new('RGBA', (result_width, result_height))
                 result.paste(im=image1, box=(0, 0))
                 result.paste(im=image2, box=(width1, 0))
 
@@ -87,12 +95,15 @@ class Gacha(commands.Cog):
 
                 image = discord.File(io.BytesIO(content), str(rnd_id) + '.png')
                 await ctx.send(content=cardstr, file=image)
+            elif ((img2 is not None)):
+                image = discord.File(img2, str(rnd_id) + '.png')
+                await ctx.send(content=cardstr, file=image)
             else:
                 await ctx.send(cardstr)
 
-    # @commands.command()
-    # async def inv(self, ctx):
-    #     await ctx.send('Here is a list of the cards in your inventory:')
+    @commands.command()
+    async def inv(self, ctx):
+        await ctx.send('Here is a list of the cards in your inventory:')
 
 def setup(bot):
     bot.add_cog(Gacha(bot))
