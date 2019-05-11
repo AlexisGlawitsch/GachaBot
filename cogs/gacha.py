@@ -31,6 +31,7 @@ class Gacha(commands.Cog):
             else:
                 rarity = 'UR'
 
+            # TODO Ignore special SSRs
             # Request list of non-promo card ids with generated rarity
             id_list = json.load(urlopen('http://schoolido.lu/api/cardids?' +\
                 'is_promo=false&rarity=' + rarity))

@@ -7,10 +7,6 @@ class Config(commands.Cog):
         self._last_member = None
 
     @commands.command()
-    async def ping(self, ctx):
-        await ctx.send(self.bot.latency)
-
-    @commands.command()
     @commands.is_owner()
     async def defprefix(self, ctx, prefix):
         self.bot.command_prefix = prefix
