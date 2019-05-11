@@ -12,9 +12,10 @@ class Basic(commands.Cog):
 
         if len(args) == 0:
             helpmsg = 'Here is a list of all available GachaBot commands:\n'
+            helpmsg += '**Basic:** help ping\n'
             helpmsg += '**Gacha:** inv roll\n'
             helpmsg += '**Info:** card idol\n'
-            helpmsg += '**Bot Management:** defprefix\n\n'
+            helpmsg += '**Config:** defprefix\n\n'
             helpmsg += 'For help with individual commands, type ' + prefix + 'help ' +\
                 '[command]'
             await ctx.send(helpmsg)

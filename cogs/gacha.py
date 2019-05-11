@@ -5,6 +5,8 @@ from urllib.request import urlopen
 import random
 import io
 import aiohttp
+import PIL
+from PIL import Image
 
 class Gacha(commands.Cog):
     def __init__(self, bot):
@@ -46,7 +48,7 @@ class Gacha(commands.Cog):
                 cardstr += '\n**Attribute:** ' + str(rnd_card.get('attribute'))
 
             # Retrieve card image(s) and send with message
-            if ((rnd_card.get('card_image') is not None) and \
+            if (rnd_card.get('card_image') is not None)
                 (rnd_card.get('card_idolized_image') is not None)):
                 url1 = 'http:' + rnd_card.get('card_image')
                 url2 = 'http:' + rnd_card.get('card_idolized_image')
@@ -58,13 +60,39 @@ class Gacha(commands.Cog):
                             await ctx.send('Oops, something went wrong with ' +\
                                 'downloading the image.')
                             return
-                        data = io.BytesIO(await resp.read())
-                        await ctx.send(file=discord.File(data, str(rnd_id) + '.png'))
-            await ctx.send(cardstr)
+                        img1 = io.BytesIO(await resp.read())
+                        image1 = Image.open(img1)
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url2) as resp:
+                        if resp.status != 200:
+                            print('Error: Could not download file')
+                            await ctx.send('Oops, something went wrong with ' +\
+                                'downloading the image.')
+                            return
+                        img2 = io.BytesIO(await resp.read())
+                        image2 = Image.open(img2)
+                (width1, height1) = image1.size
+                (width2, height2) = image2.size
 
-    @commands.command()
-    async def inv(self, ctx):
-        await ctx.send('Here is a list of the cards in your inventory:')
+                result_width = width1 + width2
+                result_height = max(height1, height2)
+
+                result = Image.new('RGB', (result_width, result_height))
+                result.paste(im=image1, box=(0, 0))
+                result.paste(im=image2, box=(width1, 0))
+
+                byte_io = io.BytesIO()
+                result.save(byte_io, format='PNG')
+                content = byte_io.getvalue()
+
+                image = discord.File(io.BytesIO(content), str(rnd_id) + '.png')
+                await ctx.send(content=cardstr, file=image)
+            else:
+                await ctx.send(cardstr)
+
+    # @commands.command()
+    # async def inv(self, ctx):
+    #     await ctx.send('Here is a list of the cards in your inventory:')
 
 def setup(bot):
     bot.add_cog(Gacha(bot))

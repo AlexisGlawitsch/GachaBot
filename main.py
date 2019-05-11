@@ -9,9 +9,10 @@ with open('config.json', 'r') as f:
 TOKEN = config_dict['token']
 
 bot = commands.Bot(command_prefix='g!', description="Simulates gacha rolls.")
-cogs = ['cogs.basic', 'cogs.gacha', 'cogs.config']
+cogs = ['cogs.basic', 'cogs.info', 'cogs.gacha', 'cogs.config']
 
 bot.remove_command('help')
+bot.remove_command('inv')
 
 @bot.event
 async def on_ready():
