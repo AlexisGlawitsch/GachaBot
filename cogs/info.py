@@ -6,47 +6,48 @@ from urllib.request import urlopen
 import io
 import aiohttp
 import datetime
+from collections import OrderedDict
+import PIL
+from PIL import Image
+from PIL import ImageOps
 
 aliases = {'yohane':'yoshiko', 'elichika':'eli', 'maru':'hanamaru'}
 
 class SIFHandler():
+    info_list = OrderedDict([('name', 'Name'), ('school', 'School'), ('year',\
+        'Year'), ('main_unit', 'Unit'), ('attribute', 'Attribute'), ('birthday',\
+        'Birthday'), ('astrological_sign', 'Star Sign'), ('blood', 'Blood Type'),\
+        ('favorite_food', 'Favorite Food'), ('least_favorite_food', 'Least' +\
+        ' Favorite Food'), ('hobbies', 'Hobbies')])
+
     @staticmethod
     def get_info(idol):
-        infomsg = '**Name:** ' + idol.get('name')
-        if (idol.get('school') is not None):
-            infomsg += '\n**School:** ' + idol.get('school')
-        if (idol.get('year') is not None):
-            infomsg += '\n**Year:** ' + idol.get('year')
-        if (idol.get('main_unit') is not None):
-            infomsg += '\n**Unit:** ' + idol.get('main_unit')
-        if (idol.get('sub_unit') is not None):
-            infomsg += ' | ' + idol.get('sub_unit')
-        if (idol.get('attribute') is not None):
-            infomsg += '\n**Attribute:** ' + idol.get('attribute')
-        if (idol.get('birthday') is not None):
-            # Formats birthday in [full month name] [DD] format
-            bday = idol.get('birthday')
-            date = datetime.datetime(1970, int(bday[:2]), int(bday[3:])),
-            infomsg += '\n**Birthday:** ' + date[0].strftime('%B %d')
-        if (idol.get('astrological_sign') is not None):
-            infomsg += '\n**Star Sign:** ' + idol.get('astrological_sign')
-        if (idol.get('blood') is not None):
-            infomsg += '\n**Blood Type:** ' + idol.get('blood')
-        if (idol.get('favorite_food') is not None):
-            infomsg += '\n**Favorite Food:** ' + idol.get('favorite_food')
-        if (idol.get('least_favorite_food') is not None):
-            infomsg += '\n**Least Favorite Food:** ' + idol.get('least_favorite_food')
-        if (idol.get('hobbies') is not None):
-            infomsg += '\n**Hobbies:** ' + idol.get('hobbies')
+        # TODO handling for subunit and birthday formatting
+        infomsg = ''
+        for key, val in SIFHandler.info_list.items():
+            if (idol.get(key) is not None):
+                temp = idol.get(key)
+                if (key == 'birthday'):
+                    date = datetime.datetime(1970, int(temp[:2]), int(temp[3:]))
+                    temp = date.strftime('%B %d')
+                infomsg += '**' + val + ':** ' + temp + '\n'
         return infomsg
-
 class GBPHandler():
+    info_list = OrderedDict([('name', 'Name'), ('school', 'School'),\
+        ('i_school_year','Year'), ('i_band', 'Band'), ('birthday', 'Birthday'),\
+        ('i_astrological_sign', 'Star Sign'), ('food_likes', 'Favorite Food'),\
+        ('food_dislikes', 'Least Favorite Food'), ('hobbies', 'Hobbies')])
+
     @staticmethod
     def get_info(member):
-        infomsg = '**Name:** ' + member.get('name')
-        infomsg += '\n**School: **' + member.get('school')
-        infomsg += '\n**Year: **' + member.get('i_school_year')
-        infomsg += '\n**Band: **' + member.get('i_band')
+        infomsg = ''
+        for key, val in GBPHandler.info_list.items():
+            if (member.get(key) is not None):
+                temp = member.get(key)
+                if (key == 'birthday'):
+                    date = datetime.datetime(1970, int(temp[5:-3]), int(temp[-2:]))
+                    temp = date.strftime('%B %d')
+                infomsg += '**' + val + ':** ' + temp + '\n'
         return infomsg
 
 class Info(commands.Cog):
@@ -94,8 +95,7 @@ class Info(commands.Cog):
         try:
             idol = idol_list[i]
             infomsg = SIFHandler.get_info(idol)
-        # TODO change this to just nonetype error instead of exception in general
-        except Exception:
+        except (TypeError, IndexError):
             check_next = True
 
         if idol is not None:
@@ -120,10 +120,9 @@ class Info(commands.Cog):
             while (i < len(member_list) and name.lower() not in member_list[i].get('name').lower()):
                 i += 1
             try:
-                # Optimize this to be better written, e.g. iterate through categories
                 member = member_list[i]
                 infomsg = GBPHandler.get_info(member)
-            except Exception:
+            except (TypeError, IndexError):
                 if check_next is True:
                     await ctx.send('I could not find the character you\'re looking for! The' +\
                         ' correct format is ' + self.bot.command_prefix + 'info [character name]')
@@ -141,6 +140,19 @@ class Info(commands.Cog):
                                 'downloading the image.')
                             return
                         data = io.BytesIO(await resp.read())
+
+                        # Figure out how to make cropping work
+
+                        # image = Image.open(data)
+                        #
+                        # image = PIL.ImageOps.fit(image, size=(image.size[0],\
+                        #     image.size[1]),bleed=0.05, centering=(1.0, 0.5))
+                        #
+                        # byte_io = io.BytesIO()
+                        # image.save(byte_io, format='PNG')
+                        # content = byte_io.getvalue()
+                        # await ctx.send(content=infomsg,file=discord.File(io.BytesIO(content), name + '.png'))
+
                         await ctx.send(content=infomsg,file=discord.File(data, name + '.png'))
             else:
                 await ctx.send(infomsg)
