@@ -8,6 +8,7 @@ import aiohttp
 import PIL
 from PIL import Image
 from abc import ABC, abstractmethod
+from collections import OrderedDict
 
 # Organize extra classes into different file later
 class ImageLoadError(Exception):
@@ -16,6 +17,7 @@ class ImageLoadError(Exception):
 
 class GachaHandler():
     rates = None
+    info_list = None
 
     def __init__(self):
         self.rnd_card = None
@@ -24,8 +26,6 @@ class GachaHandler():
         rates = self.rates
         rnd_num = random.randint(1, 100)
 
-        print('Random Number: ' + str(rnd_num))
-
         rarity = None
         prev_key = 0
 
@@ -33,22 +33,31 @@ class GachaHandler():
             print(str(prev_key + key))
             if rnd_num < prev_key + key:
                 rarity = val
-                print('New Rarity: ' + val)
                 break
             prev_key += key
 
         return rarity
 
+    def gen_info(self):
+        info_list = self.info_list
+
+        infomsg = ''
+
+        for key, val in info_list.items():
+            if (member.get(key) is not None):
+                temp = member.get(key)
+                infomsg += '**' + val + ':** ' + temp + '\n'
+        return infomsg
+
     @abstractmethod
     def random_card(self):
         pass
 
-    # @abstractmethod
-    # def random_card(self, character):
-    #     pass
-
 class SIFGacha(GachaHandler):
     rates = {80: 'R', 15: 'SR', 4: 'SSR', 1: 'UR'}
+    info_list = OrderedDict([('name', 'Name'), ('main_unit', 'Main Unit'),\
+        ('sub_unit', 'Sub Unit'), ('translated_collection', 'Collection'),\
+        ('attribute', 'Attribute'), ('skill', 'Skill'), ('skill_details', '')])
 
     def __init__(self):
         super().__init__()
@@ -63,7 +72,6 @@ class SIFGacha(GachaHandler):
         rnd_card = self.rnd_card
         rnd_idol = rnd_card.get('idol')
 
-        print(rnd_card)
         # Use an iterator
         cardstr = '**ID:** ' + str(rnd_card.get('id')) + '\n**Name:** ' +\
             rnd_idol.get('name')
@@ -76,11 +84,6 @@ class SIFGacha(GachaHandler):
             cardstr += '\n**Attribute:** ' + str(rnd_card.get('attribute'))
 
         return cardstr
-
-    # def random_card(self, character):
-    #     rarity = self.gen_rarity()
-    #     # TODO
-    #     # Get list of IDs matching character name and rarity
 
     async def get_image(self):
         rnd_card = self.rnd_card
