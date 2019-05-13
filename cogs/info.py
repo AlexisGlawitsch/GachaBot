@@ -13,43 +13,6 @@ from PIL import ImageOps
 
 aliases = {'yohane':'yoshiko', 'elichika':'eli', 'maru':'hanamaru'}
 
-class SIFHandler():
-    info_list = OrderedDict([('name', 'Name'), ('school', 'School'), ('year',\
-        'Year'), ('main_unit', 'Unit'), ('attribute', 'Attribute'), ('birthday',\
-        'Birthday'), ('astrological_sign', 'Star Sign'), ('blood', 'Blood Type'),\
-        ('favorite_food', 'Favorite Food'), ('least_favorite_food', 'Least' +\
-        ' Favorite Food'), ('hobbies', 'Hobbies')])
-
-    @staticmethod
-    def get_info(idol):
-        # TODO handling for subunit and birthday formatting
-        infomsg = ''
-        for key, val in SIFHandler.info_list.items():
-            if (idol.get(key) is not None):
-                temp = idol.get(key)
-                if (key == 'birthday'):
-                    date = datetime.datetime(1970, int(temp[:2]), int(temp[3:]))
-                    temp = date.strftime('%B %d')
-                infomsg += '**' + val + ':** ' + temp + '\n'
-        return infomsg
-class GBPHandler():
-    info_list = OrderedDict([('name', 'Name'), ('school', 'School'),\
-        ('i_school_year','Year'), ('i_band', 'Band'), ('birthday', 'Birthday'),\
-        ('i_astrological_sign', 'Star Sign'), ('food_likes', 'Favorite Food'),\
-        ('food_dislikes', 'Least Favorite Food'), ('hobbies', 'Hobbies')])
-
-    @staticmethod
-    def get_info(member):
-        infomsg = ''
-        for key, val in GBPHandler.info_list.items():
-            if (member.get(key) is not None):
-                temp = member.get(key)
-                if (key == 'birthday'):
-                    date = datetime.datetime(1970, int(temp[5:-3]), int(temp[-2:]))
-                    temp = date.strftime('%B %d')
-                infomsg += '**' + val + ':** ' + temp + '\n'
-        return infomsg
-
 class Info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -63,20 +26,10 @@ class Info(commands.Cog):
             return
 
         name = args[0]
-        if name in aliases:
-            name = aliases.get(name)
 
-        idol_list = json.load(urlopen('http://schoolido.lu/api/idols?search=' +\
-            name)).get('results')
-
-        url = 'http://bandori.party/api/members?search=' + name
-        request = urllib.request.Request(url)
-
-        request.add_header('user-agent',"Mozilla/5.0 (Windows NT 10.0; Win64;' +\
-        ' x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131' +\
-        ' Safari/537.36}")
-
-        member_list = json.load(urllib.request.urlopen(request)).get('results')
+        lists = self.get_lists(name)
+        idol_list = lists[0]
+        member_list = lists[1]
 
         if (len(idol_list) == 0 and len(member_list) == 0):
             await ctx.send('I could not find the character you\'re looking for! The' +\
@@ -115,18 +68,17 @@ class Info(commands.Cog):
                 await ctx.send(infomsg)
 
         # Check Bandori members
-        if check_next is True or check_next is False:
-            i = 0
-            while (i < len(member_list) and name.lower() not in member_list[i].get('name').lower()):
-                i += 1
-            try:
-                member = member_list[i]
-                infomsg = GBPHandler.get_info(member)
-            except (TypeError, IndexError):
-                if check_next is True:
-                    await ctx.send('I could not find the character you\'re looking for! The' +\
-                        ' correct format is ' + self.bot.command_prefix + 'info [character name]')
-                    return
+        i = 0
+        while (i < len(member_list) and name.lower() not in member_list[i].get('name').lower()):
+            i += 1
+        try:
+            member = member_list[i]
+            GBPHandler.get_info(member)
+        except (TypeError, IndexError):
+            if check_next is True:
+                await ctx.send('I could not find the character you\'re looking for! The' +\
+                    ' correct format is ' + self.bot.command_prefix + 'info [character name]')
+                return
 
         if (member is not None):
             if (member.get('image') is not None):
@@ -141,21 +93,146 @@ class Info(commands.Cog):
                             return
                         data = io.BytesIO(await resp.read())
 
-                        # Figure out how to make cropping work
-
-                        # image = Image.open(data)
-                        #
-                        # image = PIL.ImageOps.fit(image, size=(image.size[0],\
-                        #     image.size[1]),bleed=0.05, centering=(1.0, 0.5))
-                        #
-                        # byte_io = io.BytesIO()
-                        # image.save(byte_io, format='PNG')
-                        # content = byte_io.getvalue()
-                        # await ctx.send(content=infomsg,file=discord.File(io.BytesIO(content), name + '.png'))
-
                         await ctx.send(content=infomsg,file=discord.File(data, name + '.png'))
             else:
                 await ctx.send(infomsg)
+
+    @commands.command()
+    async def bio(self, ctx, *args):
+        if (len(args) < 1):
+            await ctx.send('The correct format is ' + self.bot.command_prefix + 'info' +\
+                ' [character name]')
+            return
+
+        name = args[0]
+
+        lists = self.get_lists(name)
+        idol_list = lists[0]
+        member_list = lists[1]
+
+        if (len(idol_list) == 0 and len(member_list) == 0):
+            await ctx.send('I could not find the character you\'re looking for! The' +\
+                ' correct format is ' + self.bot.command_prefix + 'info [character name]')
+            return
+
+        idol = None
+        member = None
+
+        # May not be the best way to do this
+        # Check SIF idols
+        check_next = False
+        i = 0
+        while (i < len(idol_list) and not self.is_name(name, idol_list[i].get('name'))):
+            i += 1
+        try:
+            idol = idol_list[i]
+            infomsg = '**' + idol.get('name') + '**\n'
+            infomsg += SIFHandler.get_desc(idol)
+        except (TypeError, IndexError):
+            check_next = True
+        else:
+            await ctx.send(infomsg)
+
+        # Check Bandori members
+        i = 0
+        while (i < len(member_list) and not self.is_name(name, member_list[i].get('name'))):
+            i += 1
+        try:
+            member = member_list[i]
+            infomsg = '**' + member.get('name') + '**\n'
+            infomsg += GBPHandler.get_desc(member)
+        except (TypeError, IndexError):
+            if check_next is True:
+                await ctx.send('I could not find the character you\'re looking for! The' +\
+                    ' correct format is ' + self.bot.command_prefix + 'info [character name]')
+                return
+        else:
+            await ctx.send(infomsg)
+
+    def get_lists(self, name):
+        if name in aliases:
+            name = aliases.get(name)
+
+        idol_list = json.load(urlopen('http://schoolido.lu/api/idols?search=' +\
+            name)).get('results')
+
+        url = 'http://bandori.party/api/members?search=' + name
+        request = urllib.request.Request(url)
+
+        request.add_header('user-agent',"Mozilla/5.0 (Windows NT 10.0; Win64;' +\
+        ' x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131' +\
+        ' Safari/537.36}")
+
+        member_list = json.load(urllib.request.urlopen(request)).get('results')
+
+        return (idol_list, member_list)
+
+    def is_name(self, search_name, current_name):
+        search_name = search_name.lower()
+        current_name = current_name.lower()
+
+        try:
+            index = current_name.index(search_name)
+        except ValueError:
+            return False
+
+        if (index == 0):
+            if (current_name[len(search_name)] == ' '):
+                return True
+            return False
+
+        if (index == len(current_name) - len(search_name)):
+            if (current_name[len(current_name) - len(search_name) - 1] == ' '):
+                return True
+            return False
+
+        return False
+
+class SIFHandler():
+    info_list = OrderedDict([('name', 'Name'), ('school', 'School'), ('year',\
+        'Year'), ('main_unit', 'Unit'), ('attribute', 'Attribute'), ('birthday',\
+        'Birthday'), ('astrological_sign', 'Star Sign'), ('blood', 'Blood Type'),\
+        ('favorite_food', 'Favorite Food'), ('least_favorite_food', 'Least' +\
+        ' Favorite Food'), ('hobbies', 'Hobbies')])
+
+    @staticmethod
+    def get_info(idol):
+        # TODO handling for subunit formatting
+        infomsg = ''
+        for key, val in SIFHandler.info_list.items():
+            if (idol.get(key) is not None):
+                temp = idol.get(key)
+                if (key == 'birthday'):
+                    date = datetime.datetime(1970, int(temp[:2]), int(temp[3:]))
+                    temp = date.strftime('%B %d')
+                infomsg += '**' + val + ':** ' + temp + '\n'
+        return infomsg
+
+    @staticmethod
+    def get_desc(idol):
+        return idol.get('summary')
+
+class GBPHandler():
+    info_list = OrderedDict([('name', 'Name'), ('school', 'School'),\
+        ('i_school_year','Year'), ('i_band', 'Band'), ('birthday', 'Birthday'),\
+        ('i_astrological_sign', 'Star Sign'), ('food_likes', 'Favorite Food'),\
+        ('food_dislikes', 'Least Favorite Food'), ('hobbies', 'Hobbies')])
+
+    @staticmethod
+    def get_info(member):
+        infomsg = ''
+        for key, val in GBPHandler.info_list.items():
+            if (member.get(key) is not None):
+                temp = member.get(key)
+                if (key == 'birthday'):
+                    date = datetime.datetime(1970, int(temp[5:-3]), int(temp[-2:]))
+                    temp = date.strftime('%B %d')
+                infomsg += '**' + val + ':** ' + temp + '\n'
+        return infomsg
+
+    @staticmethod
+    def get_desc(member):
+        return member.get('description')
 
 def setup(bot):
     bot.add_cog(Info(bot))
