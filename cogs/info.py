@@ -73,7 +73,7 @@ class Info(commands.Cog):
             i += 1
         try:
             member = member_list[i]
-            GBPHandler.get_info(member)
+            infomsg = GBPHandler.get_info(member)
         except (TypeError, IndexError):
             if check_next is True:
                 await ctx.send('I could not find the character you\'re looking for! The' +\
@@ -163,7 +163,17 @@ class Info(commands.Cog):
         ' x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131' +\
         ' Safari/537.36}")
 
-        member_list = json.load(urllib.request.urlopen(request)).get('results')
+        current_list = json.load(urllib.request.urlopen(request))
+        member_list = current_list.get('results')
+
+        while current_list.get('next') is not None:
+            request = urllib.request.Request(current_list.get('next'))
+
+            request.add_header('user-agent',"Mozilla/5.0 (Windows NT 10.0; Win64;' +\
+            ' x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131' +\
+            ' Safari/537.36}")
+            current_list = json.load(urllib.request.urlopen(request))
+            member_list = member_list + current_list.get('results')
 
         return (idol_list, member_list)
 
