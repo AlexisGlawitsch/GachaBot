@@ -12,13 +12,77 @@ from PIL import Image
 from PIL import ImageOps
 import re
 
-aliases = {'yohane':'yoshiko', 'elichika':'eli', 'maru':'hanamaru', 'pana':'hanayo'}
+aliases = {'yohane':'yoshiko', 'elichika':'eli', 'maru':'hanamaru', 'pana':'hanayo',\
+    'michelle':'misaki'}
 
 class Info(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
         self._last_member = None
+
+    @commands.command()
+    async def profile(self, ctx, username):
+        """Retrieve a School Idol Tomodachi user by username and display in an embed"""
+
+        user = json.load(urlopen('http://schoolido.lu/api/users/' + username +\
+            '?expand_accounts'))
+        username = user.get('username')
+
+        # Implement a way to display multiple accounts, e.g. prompt user to pick
+        account = user.get('accounts')[0]
+
+        if account is None:
+            ctx.send('Sorry, I can\t find the account you\'re looking for!\n' +\
+                'Make sure you\'re typing the School Idol Tomodachi username' +\
+                ' rather than the SIF account name.\n\nFor more info, type `' +\
+                self.bot.command_prefix + 'help profile`.')
+            return
+
+        nickname = account.get('nickname')
+        website_url = account.get('website_url')
+        friend_id = account.get('friend_id')
+        img_url = 'http:' + account.get('center').get('round_image')
+        version = account.get('language')
+        os = account.get('os')
+        device = account.get('device')
+        play_with = account.get('play_with')
+        rank = account.get('rank')
+        ranking = account.get('ranking')
+
+        preferences = json.load(urlopen('http://schoolido.lu/api/users/' + username +\
+            '?expand_preferences')).get('preferences')
+        description = preferences.get('description')
+        best_girl = preferences.get('best_girl')
+
+        embed=discord.Embed(title=nickname + ' | ' + str(friend_id) + ' | ' + version,\
+            description=website_url, color=0x9186db)
+        embed.set_thumbnail(url=img_url)
+        if (len(description) != 0):
+            embed.add_field(name='Description', value=description, inline=False)
+        embed.add_field(name='Best Girl', value=best_girl, inline=False)
+        embed.add_field(name='Rank', value = str(rank), inline=True)
+        embed.add_field(name='Ranking', value= '#' + str(ranking), inline=True)
+        embed.add_field(name='Device', value=os + ' | ' + device, inline=True)
+        embed.add_field(name='Plays With', value=play_with, inline=True)
+
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def characters(self, ctx, *args):
+        if (args[0] == 'sif'):
+            msg = SIFHandler.get_characters()
+        elif (args[0] == 'gbp'):
+            msg = GBPHandler.get_characters()
+        else:
+            await ctx.send('Invalid command. Proper format is `' + self.bot.command_prefix +\
+                'characters [game]`. Valid games are `sif` for Love Live! School ' +\
+                'Idol Festival! and `gbp` for BanG Dream! Girls Band Party.\n\n' +\
+                'Type `' + self.bot.command_prefix + 'help characters` for more' +\
+                ' information.')
+            return
+
+        await ctx.send(msg)
 
     @commands.command()
     async def info(self, ctx, *args):
@@ -107,7 +171,7 @@ class Info(commands.Cog):
         global aliases
 
         if (len(args) < 1):
-            await ctx.send('The correct format is ' + self.bot.command_prefix + 'info' +\
+            await ctx.send('The correct format is ' + self.bot.command_prefix + 'bio' +\
                 ' [character name]')
             return
 
@@ -122,7 +186,7 @@ class Info(commands.Cog):
 
         if (len(idol_list) == 0 and len(member_list) == 0):
             await ctx.send('I could not find the character you\'re looking for! The' +\
-                ' correct format is ' + self.bot.command_prefix + 'info [character name]')
+                ' correct format is ' + self.bot.command_prefix + 'bio [character name]')
             return
 
         idol = None
@@ -220,6 +284,36 @@ class SIFHandler():
     def get_desc(idol):
         return idol.get('summary')
 
+    @staticmethod
+    def get_characters():
+        infomsg = 'Love Live! School Idol Festival! Characters:\n\n'
+        # infomsg += '**µ\'s**\nHonoka Kousaka\nUmi Sonoda\nKotori Minami\nMaki ' +\
+        #     'Nishikino\nRin Hoshizora\nHanayo Koizumi\nNozomi Tojo\nEli Ayase\n' +\
+        #     'Nico Yazawa\n\n'
+        # infomsg += '**Aqours**\nChika Takami\nRiko Sakurauchi\nYou Watanabe\n' +\
+        #     'Hanamaru Kunikinda\nRuby Kurosawa\nYoshiko Tsushima\nKanan Matsuura\n' +\
+        #     'Mari Ohara\nDia Kurosawa'
+        # return infomsg
+        infomsg += '**µ\'s**\n'
+        infomsg += '{:40}{:40}{:40}\n'.format('**Printemps**', '**Lily White**',\
+            '**BiBi**')
+        infomsg += '`{:20}{:20}{:20}\n'.format('Honoka Kousaka', 'Nozomi Tojo',\
+            'Maki Nishikino')
+        infomsg += '{:20}{:20}{:20}\n'.format('Kotori Minami', 'Rin Hoshizora',\
+                'Eli Ayase')
+        infomsg += '{:20}{:20}{:20}`\n\n'.format('Hanayo Koizumi', 'Umi Sonoda',\
+                        'Nico Yazawa')
+        infomsg += '**Aqours**\n'
+        infomsg += '{:40}{:40}{:40}\n'.format('**CYaRon!**', '**Azalea**',\
+            '**Guilty Kiss**')
+        infomsg += '`{:20}{:20}{:20}\n'.format('Chika Takami', 'Dia Kurosawa',\
+            'Riko Sakurauchi')
+        infomsg += '{:20}{:20}{:20}\n'.format('You Watanabe', 'Hanamaru Kunikida',\
+                'Yoshiko Tsushima')
+        infomsg += '{:20}{:20}{:20}`\n\n'.format('Ruby Kurosawa', 'Kanan Matsuura',\
+                        'Mari Ohara')
+        return infomsg
+
 class GBPHandler():
     info_list = OrderedDict([('name', 'Name'), ('school', 'School'),\
         ('i_school_year','Year'), ('i_band', 'Band'), ('birthday', 'Birthday'),\
@@ -241,6 +335,21 @@ class GBPHandler():
     @staticmethod
     def get_desc(member):
         return member.get('description')
+
+    @staticmethod
+    def get_characters():
+        infomsg = 'BanG Dream! Girls Band Party Characters:\n\n'
+        infomsg += '**Poppin\'Party**\nKasumi Toyama\nRimi Ushigome\nArisa ' +\
+            'Ichigaya\nSaya Yamabuki\nTae Hanazono\n\n'
+        infomsg += '**Afterglow**\nRan Mitake\nTomoe Udagawa\nHimari Uehara\n' +\
+            'Moca Aoba\nTsugumi Hazawa\n\n'
+        infomsg += '**Pastel\\*Palettes**\nAya Maruyama\nHina Hikawa\nEve ' +\
+            ' Wakamiya\nMaya Yamato\nChisato Shirasagi\n\n'
+        infomsg += '**Roselia**\nYukina Minato\nRinko Shirogane\nAko Udagawa\n' +\
+            'Lisa Imai\nSayo Hikawa\n\n'
+        infomsg += '**Hello, Happy World!**\nKokoro Tsurumaki\nHagumi Kitazawa\n' +\
+            'Kanon Matsubara\nKaoru Seta\nMichelle (Misaki Okusawa)'
+        return infomsg
 
 def setup(bot):
     bot.add_cog(Info(bot))
