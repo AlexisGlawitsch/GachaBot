@@ -4,8 +4,8 @@
 GachaBot is a Discord bot that allows for simulation of gacha rolls in various mobile games, such as Love Live! School Idol Festival! and Bang Dream! Girls Band Party!
 
 ## Features
-* Standard SIF gacha roll
-* Information on SIF and GBP characters
+* Standard SIF gacha roll (g!roll)
+* Information on SIF and GBP characters (g!info and g!bio)
 
 ## Planned Features
 * Gacha support for Bandori
@@ -18,7 +18,7 @@ GachaBot is a Discord bot that allows for simulation of gacha rolls in various m
 * Profile feature that allows users to display their favorite character and some other stats
 
 ## Additional information
-If you want to host the bot on your own server, make sure to create your own config.json with
+If you want to host the bot on your own server, make sure to update the config.json file with
 "token": "[your bot's token here]"
 
 ## Credit
