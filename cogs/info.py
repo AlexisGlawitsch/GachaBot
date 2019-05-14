@@ -10,8 +10,9 @@ from collections import OrderedDict
 import PIL
 from PIL import Image
 from PIL import ImageOps
+import re
 
-aliases = {'yohane':'yoshiko', 'elichika':'eli', 'maru':'hanamaru'}
+aliases = {'yohane':'yoshiko', 'elichika':'eli', 'maru':'hanamaru', 'pana':'hanayo'}
 
 class Info(commands.Cog):
     def __init__(self, bot):
@@ -43,7 +44,7 @@ class Info(commands.Cog):
         # Check SIF idols
         check_next = False
         i = 0
-        while (i < len(idol_list) and name.lower() not in idol_list[i].get('name').lower()):
+        while (i < len(idol_list) and not self.is_name(name, idol_list[i].get('name'))):
             i += 1
         try:
             idol = idol_list[i]
@@ -69,7 +70,7 @@ class Info(commands.Cog):
 
         # Check Bandori members
         i = 0
-        while (i < len(member_list) and name.lower() not in member_list[i].get('name').lower()):
+        while (i < len(member_list) and not self.is_name(name, member_list[i].get('name'))):
             i += 1
         try:
             member = member_list[i]
@@ -150,6 +151,7 @@ class Info(commands.Cog):
             await ctx.send(infomsg)
 
     def get_lists(self, name):
+        """Fetches lists of cards from APIs"""
         if name in aliases:
             name = aliases.get(name)
 
@@ -178,24 +180,15 @@ class Info(commands.Cog):
         return (idol_list, member_list)
 
     def is_name(self, search_name, current_name):
+        """Makes sure the name being searched for is standalone"""
         search_name = search_name.lower()
         current_name = current_name.lower()
 
-        try:
-            index = current_name.index(search_name)
-        except ValueError:
-            return False
+        search_str = '\\b' + search_name + '\\b'
+        found = re.search(search_str, current_name)
 
-        if (index == 0):
-            if (current_name[len(search_name)] == ' '):
-                return True
-            return False
-
-        if (index == len(current_name) - len(search_name)):
-            if (current_name[len(current_name) - len(search_name) - 1] == ' '):
-                return True
-            return False
-
+        if found is not None:
+            return True
         return False
 
 class SIFHandler():
