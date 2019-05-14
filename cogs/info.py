@@ -15,6 +15,7 @@ import re
 aliases = {'yohane':'yoshiko', 'elichika':'eli', 'maru':'hanamaru', 'pana':'hanayo'}
 
 class Info(commands.Cog):
+
     def __init__(self, bot):
         self.bot = bot
         self._last_member = None
@@ -27,6 +28,9 @@ class Info(commands.Cog):
             return
 
         name = args[0]
+
+        if name in aliases:
+            name = aliases.get(name)
 
         lists = self.get_lists(name)
         idol_list = lists[0]
@@ -100,12 +104,17 @@ class Info(commands.Cog):
 
     @commands.command()
     async def bio(self, ctx, *args):
+        global aliases
+
         if (len(args) < 1):
             await ctx.send('The correct format is ' + self.bot.command_prefix + 'info' +\
                 ' [character name]')
             return
 
         name = args[0]
+
+        if name in aliases:
+            name = aliases.get(name)
 
         lists = self.get_lists(name)
         idol_list = lists[0]
@@ -152,9 +161,6 @@ class Info(commands.Cog):
 
     def get_lists(self, name):
         """Fetches lists of cards from APIs"""
-        if name in aliases:
-            name = aliases.get(name)
-
         idol_list = json.load(urlopen('http://schoolido.lu/api/idols?search=' +\
             name)).get('results')
 
@@ -176,7 +182,6 @@ class Info(commands.Cog):
             ' Safari/537.36}")
             current_list = json.load(urllib.request.urlopen(request))
             member_list = member_list + current_list.get('results')
-
         return (idol_list, member_list)
 
     def is_name(self, search_name, current_name):
