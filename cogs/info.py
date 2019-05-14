@@ -345,7 +345,7 @@ class GBPHandler():
             'Moca Aoba\nTsugumi Hazawa\n\n'
         infomsg += '**Pastel\\*Palettes**\nAya Maruyama\nHina Hikawa\nEve ' +\
             ' Wakamiya\nMaya Yamato\nChisato Shirasagi\n\n'
-        infomsg += '**Roselia**\nYukina Minato\nRinko Shirogane\nAko Udagawa\n' +\
+        infomsg += '**Roselia**\nYukina Minato\nRinko Shirokane\nAko Udagawa\n' +\
             'Lisa Imai\nSayo Hikawa\n\n'
         infomsg += '**Hello, Happy World!**\nKokoro Tsurumaki\nHagumi Kitazawa\n' +\
             'Kanon Matsubara\nKaoru Seta\nMichelle (Misaki Okusawa)'
