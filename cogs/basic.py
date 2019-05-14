@@ -18,8 +18,8 @@ class Basic(commands.Cog):
             helpmsg = 'Here is a list of all available GachaBot commands:\n'
             helpmsg += '**Basic:** `help` `ping`\n'
             helpmsg += '**Gacha:** `inv` `roll`\n'
-            helpmsg += '**Info:** `info`  `bio`\n'
-            helpmsg += '**Stats:** `stats`\n'
+            helpmsg += '**Info:** `info`  `bio` `characters`\n'
+            helpmsg += '**Stats:** `profile` `stats`\n'
             helpmsg += '**Config:** `defprefix`\n\n'
             helpmsg += 'For help with individual commands, type `' + prefix + 'help ' +\
                 '[command]`'
@@ -33,7 +33,7 @@ class Basic(commands.Cog):
                     '`@user` - Checks the inventory of a user on the Discord server.'
             elif cmd == 'roll':
                 msg = 'Rolls the gacha.\nProper format is `' + prefix + 'roll [game].`\n' +\
-                    '`game` - Specifies which game to roll for; `sif` or `gbp`\n\n' +\
+                    '`game` - Specifies which game to roll for; `sif` or `gbp`.\n\n' +\
                     'Any amount of optional parameters can be added in this order:' +\
                     '\n`name` - Name of the character for character-specific rolls' +\
                     '\n`rarity` - Rarity of the card for rarity-specific rolls' +\
@@ -44,9 +44,16 @@ class Basic(commands.Cog):
             elif cmd == 'info':
                 msg = 'Returns information on a specific character.\nProper format is `' +\
                     prefix + 'info [name]`'
+            elif cmd == 'characters':
+                msg = 'Returns a list of characters from the specified game.\n' +\
+                    'Proper format is `' + prefix + 'characters [game]`.\n`game`' +\
+                    ' - Specifies which game to roll for, `sif` or `gbp`.'
             elif cmd == 'bio':
                 msg = 'Returns biography information on a specific character.\nProper' +\
                     ' format is `' + prefix + 'bio [name]`'
+            elif cmd == 'profile':
+                msg = 'Returns information on the specified School Idol Tomodachi' +\
+                    ' account.\nProper format is `' + prefix + 'profile [username]`.'
             elif cmd == 'stats':
                 msg = 'Returns a user\'s lifetime gacha stats.\nProper format is `' +\
                     prefix + 'stats`\n\nOptional Parameters:\n`[@user]` - User whose' +\
