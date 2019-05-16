@@ -12,8 +12,9 @@ from PIL import Image
 from PIL import ImageOps
 import re
 
-aliases = {'yohane':'yoshiko', 'elichika':'eli', 'maru':'hanamaru', 'pana':'hanayo',\
-    'michelle':'misaki'}
+aliases = {'yohane': 'yoshiko', 'elichika': 'eli', 'maru': 'hanamaru', 'pana': 'hanayo',
+           'michelle': 'misaki'}
+
 
 class Info(commands.Cog):
 
@@ -25,8 +26,8 @@ class Info(commands.Cog):
     async def profile(self, ctx, username):
         """Retrieve a School Idol Tomodachi user by username and display in an embed"""
 
-        user = json.load(urlopen('http://schoolido.lu/api/users/' + username +\
-            '?expand_accounts'))
+        user = json.load(urlopen('http://schoolido.lu/api/users/' + username +
+                                 '?expand_accounts'))
         username = user.get('username')
 
         # Implement a way to display multiple accounts, e.g. prompt user to pick
@@ -138,27 +139,27 @@ class Info(commands.Cog):
 
         # Check Bandori members
         i = 0
-        while (i < len(member_list) and not self.is_name(name, member_list[i].get('name'))):
+        while i < len(member_list) and not self.is_name(name, member_list[i].get('name')):
             i += 1
         try:
             member = member_list[i]
             infomsg = GBPHandler.get_info(member)
         except (TypeError, IndexError):
             if check_next is True:
-                await ctx.send('I could not find the character you\'re looking for! The' +\
-                    ' correct format is ' + self.bot.command_prefix + 'info [character name]')
+                await ctx.send('I could not find the character you\'re looking for! The'
+                               ' correct format is ' + self.bot.command_prefix + 'info [character name]')
                 return
 
-        if (member is not None):
-            if (member.get('image') is not None):
+        if member is not None:
+            if member.get('image') is not None:
                 url = member.get('image')
 
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url) as resp:
                         if resp.status != 200:
                             print('Error: Could not download file')
-                            await ctx.send('Oops, something went wrong with ' +\
-                                'downloading the image.')
+                            await ctx.send('Oops, something went wrong with '
+                                           'downloading the image.')
                             return
                         data = io.BytesIO(await resp.read())
 
@@ -170,9 +171,9 @@ class Info(commands.Cog):
     async def bio(self, ctx, *args):
         global aliases
 
-        if (len(args) < 1):
-            await ctx.send('The correct format is ' + self.bot.command_prefix + 'bio' +\
-                ' [character name]')
+        if len(args) < 1:
+            await ctx.send('The correct format is ' + self.bot.command_prefix + 'bio'
+                            ' [character name]')
             return
 
         name = args[0]
@@ -184,19 +185,16 @@ class Info(commands.Cog):
         idol_list = lists[0]
         member_list = lists[1]
 
-        if (len(idol_list) == 0 and len(member_list) == 0):
-            await ctx.send('I could not find the character you\'re looking for! The' +\
-                ' correct format is ' + self.bot.command_prefix + 'bio [character name]')
+        if len(idol_list) == 0 and len(member_list) == 0:
+            await ctx.send('I could not find the character you\'re looking for! The'
+                           ' correct format is ' + self.bot.command_prefix + 'bio [character name]')
             return
-
-        idol = None
-        member = None
 
         # May not be the best way to do this
         # Check SIF idols
         check_next = False
         i = 0
-        while (i < len(idol_list) and not self.is_name(name, idol_list[i].get('name'))):
+        while i < len(idol_list) and not self.is_name(name, idol_list[i].get('name')):
             i += 1
         try:
             idol = idol_list[i]
@@ -209,7 +207,7 @@ class Info(commands.Cog):
 
         # Check Bandori members
         i = 0
-        while (i < len(member_list) and not self.is_name(name, member_list[i].get('name'))):
+        while i < len(member_list) and not self.is_name(name, member_list[i].get('name')):
             i += 1
         try:
             member = member_list[i]
@@ -217,21 +215,22 @@ class Info(commands.Cog):
             infomsg += GBPHandler.get_desc(member)
         except (TypeError, IndexError):
             if check_next is True:
-                await ctx.send('I could not find the character you\'re looking for! The' +\
-                    ' correct format is ' + self.bot.command_prefix + 'info [character name]')
+                await ctx.send('I could not find the character you\'re looking for! The'
+                               ' correct format is ' + self.bot.command_prefix + 'info [character name]')
                 return
         else:
             await ctx.send(infomsg)
 
-    def get_lists(self, name):
+    @staticmethod
+    def get_lists(name):
         """Fetches lists of cards from APIs"""
-        idol_list = json.load(urlopen('http://schoolido.lu/api/idols?search=' +\
-            name)).get('results')
+        idol_list = json.load(urlopen('http://schoolido.lu/api/idols?search=' +
+                                      name)).get('results')
 
         url = 'http://bandori.party/api/members?search=' + name
         request = urllib.request.Request(url)
 
-        request.add_header('user-agent',"Mozilla/5.0 (Windows NT 10.0; Win64;' +\
+        request.add_header('user-agent', "Mozilla/5.0 (Windows NT 10.0; Win64;' +\
         ' x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131' +\
         ' Safari/537.36}")
 
@@ -246,9 +245,10 @@ class Info(commands.Cog):
             ' Safari/537.36}")
             current_list = json.load(urllib.request.urlopen(request))
             member_list = member_list + current_list.get('results')
-        return (idol_list, member_list)
+        return idol_list, member_list
 
-    def is_name(self, search_name, current_name):
+    @staticmethod
+    def is_name(search_name, current_name):
         """Makes sure the name being searched for is standalone"""
         search_name = search_name.lower()
         current_name = current_name.lower()
@@ -260,11 +260,12 @@ class Info(commands.Cog):
             return True
         return False
 
+
 class SIFHandler():
-    info_list = OrderedDict([('name', 'Name'), ('school', 'School'), ('year',\
-        'Year'), ('main_unit', 'Unit'), ('attribute', 'Attribute'), ('birthday',\
-        'Birthday'), ('astrological_sign', 'Star Sign'), ('blood', 'Blood Type'),\
-        ('favorite_food', 'Favorite Food'), ('least_favorite_food', 'Least' +\
+    info_list = OrderedDict([('name', 'Name'), ('school', 'School'), ('year',
+        'Year'), ('main_unit', 'Unit'), ('attribute', 'Attribute'), ('birthday',
+        'Birthday'), ('astrological_sign', 'Star Sign'), ('blood', 'Blood Type'),
+        ('favorite_food', 'Favorite Food'), ('least_favorite_food', 'Least' +
         ' Favorite Food'), ('hobbies', 'Hobbies')])
 
     @staticmethod
@@ -272,9 +273,9 @@ class SIFHandler():
         # TODO handling for subunit formatting
         infomsg = ''
         for key, val in SIFHandler.info_list.items():
-            if (idol.get(key) is not None):
+            if idol.get(key) is not None:
                 temp = idol.get(key)
-                if (key == 'birthday'):
+                if key == 'birthday':
                     date = datetime.datetime(1970, int(temp[:2]), int(temp[3:]))
                     temp = date.strftime('%B %d')
                 infomsg += '**' + val + ':** ' + temp + '\n'
@@ -295,24 +296,25 @@ class SIFHandler():
         #     'Mari Ohara\nDia Kurosawa'
         # return infomsg
         infomsg += '**µ\'s**\n'
-        infomsg += '{:40}{:40}{:40}\n'.format('**Printemps**', '**Lily White**',\
+        infomsg += '{:40}{:40}{:40}\n'.format('**Printemps**', '**Lily White**',
             '**BiBi**')
-        infomsg += '`{:20}{:20}{:20}\n'.format('Honoka Kousaka', 'Nozomi Tojo',\
+        infomsg += '`{:20}{:20}{:20}\n'.format('Honoka Kousaka', 'Nozomi Tojo',
             'Maki Nishikino')
-        infomsg += '{:20}{:20}{:20}\n'.format('Kotori Minami', 'Rin Hoshizora',\
+        infomsg += '{:20}{:20}{:20}\n'.format('Kotori Minami', 'Rin Hoshizora',
                 'Eli Ayase')
-        infomsg += '{:20}{:20}{:20}`\n\n'.format('Hanayo Koizumi', 'Umi Sonoda',\
+        infomsg += '{:20}{:20}{:20}`\n\n'.format('Hanayo Koizumi', 'Umi Sonoda',
                         'Nico Yazawa')
         infomsg += '**Aqours**\n'
-        infomsg += '{:40}{:40}{:40}\n'.format('**CYaRon!**', '**Azalea**',\
+        infomsg += '{:40}{:40}{:40}\n'.format('**CYaRon!**', '**Azalea**',
             '**Guilty Kiss**')
-        infomsg += '`{:20}{:20}{:20}\n'.format('Chika Takami', 'Dia Kurosawa',\
+        infomsg += '`{:20}{:20}{:20}\n'.format('Chika Takami', 'Dia Kurosawa',
             'Riko Sakurauchi')
-        infomsg += '{:20}{:20}{:20}\n'.format('You Watanabe', 'Hanamaru Kunikida',\
+        infomsg += '{:20}{:20}{:20}\n'.format('You Watanabe', 'Hanamaru Kunikida',
                 'Yoshiko Tsushima')
-        infomsg += '{:20}{:20}{:20}`\n\n'.format('Ruby Kurosawa', 'Kanan Matsuura',\
+        infomsg += '{:20}{:20}{:20}`\n\n'.format('Ruby Kurosawa', 'Kanan Matsuura',
                         'Mari Ohara')
         return infomsg
+
 
 class GBPHandler():
     info_list = OrderedDict([('name', 'Name'), ('school', 'School'),\
@@ -324,9 +326,9 @@ class GBPHandler():
     def get_info(member):
         infomsg = ''
         for key, val in GBPHandler.info_list.items():
-            if (member.get(key) is not None):
+            if member.get(key) is not None:
                 temp = member.get(key)
-                if (key == 'birthday'):
+                if key == 'birthday':
                     date = datetime.datetime(1970, int(temp[5:-3]), int(temp[-2:]))
                     temp = date.strftime('%B %d')
                 infomsg += '**' + val + ':** ' + temp + '\n'
@@ -350,6 +352,7 @@ class GBPHandler():
         infomsg += '**Hello, Happy World!**\nKokoro Tsurumaki\nHagumi Kitazawa\n' +\
             'Kanon Matsubara\nKaoru Seta\nMichelle (Misaki Okusawa)'
         return infomsg
+
 
 def setup(bot):
     bot.add_cog(Info(bot))

@@ -1,5 +1,5 @@
-import discord
 from discord.ext import commands
+
 
 class Stats(commands.Cog):
     def __init__(self, bot):
@@ -17,6 +17,7 @@ class Stats(commands.Cog):
         msg += '4 Star: 0\n3 Star: 0\n2 Star: 0'
 
         await ctx.send(msg)
+
 
 def setup(bot):
     bot.add_cog(Stats(bot))
